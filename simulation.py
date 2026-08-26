@@ -39,11 +39,10 @@ class Simulation:
                         self.graph.zones[old_zone].current_occupants.remove(drone.id)
 
                         drone.path_step += 1
-                        drone.current_zone = drone.path[drone.path_step]
 
-                        self.graph.zones[drone.current_zone].current_occupants.append(drone.id)
+                        self.graph.zones[next_zone].current_occupants.append(drone.id)
 
-                        moves.append(f"{drone.id}-{drone.current_zone}")
+                        moves.append(f"{drone.id}-{next_zone}")
                     else:
                         pass
 

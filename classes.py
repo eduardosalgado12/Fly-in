@@ -85,6 +85,8 @@ class Drone:
         self.current_zone = current_zone
         self.current_connection = current_connection
         self.turns_remaining = turns_remaining
+        self.path: list[str] = []
+        self.path_step: int = 0
 
 
 class Graph:

@@ -28,7 +28,6 @@ class Parser:
                 self.current_line = nbr_line
                 self._parse_line(line)
 
-
     def _parse_line(self, line: str) -> None:
         """Identifies the line type and delegates to the right handler."""
 
@@ -58,13 +57,12 @@ class Parser:
         except ValueError:
             raise ParserError(
                 f"Line {self.current_line}: nb_drones must be integer")
-            
+
         if nb_drones <= 0:
             raise ParserError(
                 f"Line {self.current_line}: nb_drones must be positive")
 
         self.nb_drones = nb_drones
-
 
     def _parse_metadata(self, block: str) -> dict[str, str]:
         """Parses a '[key=value key2=value2]' block into a dict."""
@@ -81,17 +79,17 @@ class Parser:
 
         return metadata
 
-
-    def _parse_zone(self, line: str, is_start: bool = False, is_end: bool = False) -> None:
+    def _parse_zone(self, line: str, is_start: bool = False,
+                    is_end: bool = False) -> None:
 
         if "[" in line:
-            zone, metadata = line.split("[", 1)
-            metadata = self._parse_metadata(metadata)
+            zone_str, metadata_block = line.split("[", 1)
+            metadata = self._parse_metadata(metadata_block)
         else:
-            zone = line
+            zone_str = line
             metadata = {}
 
-        parts = zone.split()
+        parts = zone_str.split()
         name = parts[0]
         x_str = parts[1]
         y_str = parts[2]
@@ -100,26 +98,26 @@ class Parser:
             raise ParserError(
                 f"Line {self.current_line}: zone names can't contain "
                 f"dashes or spaces"
-            )                 
+            )
 
         if name in self.graph.zones:
             raise ParserError(
-            f"Line {self.current_line}: name need to be unique")
-            
+                f"Line {self.current_line}: name need to be unique")
+
         try:
             x = int(x_str)
             y = int(y_str)
         except ValueError:
-                raise ParserError(
-                    f"Line {self.current_line}: x and y must be integer")
+            raise ParserError(
+                f"Line {self.current_line}: x and y must be integer")
 
         zone_type_str = metadata.get("zone", "normal")
         try:
             zone_type = ZoneType(zone_type_str)
         except ValueError:
             raise ParserError(
-            f"Line {self.current_line}: invalid zone type {zone_type}"
-            )
+                f"Line {self.current_line}: invalid zone type {zone_type}"
+                )
 
         color = metadata.get("color")
 
@@ -128,13 +126,13 @@ class Parser:
             max_drones = int(max_drones_str)
         except ValueError:
             raise ParserError(
-        f"Line {self.current_line}: max_drones must be an integer"
-        )
+                f"Line {self.current_line}: max_drones must be an integer"
+                )
         if max_drones <= 0:
             raise ParserError(
                 f"Line {self.current_line}: max_drones must be positive"
-        )
-        
+                )
+
         if is_start:
             if self.graph.start is None:
                 self.graph.add_zone(StartHub(name, x, y, color=color))
@@ -150,17 +148,16 @@ class Parser:
         else:
             self.graph.add_zone(Zone(name, x, y, zone_type, color, max_drones))
 
-
     def _parse_connection(self, line: str) -> None:
 
         if "[" in line:
-            connection, metadata = line.split("[", 1)
-            metadata = self._parse_metadata(metadata)
+            connection_str, metadata_block = line.split("[", 1)
+            metadata = self._parse_metadata(metadata_block)
         else:
-            connection = line
+            connection_str = line
             metadata = {}
 
-        parts = connection.strip().split("-", 1)
+        parts = connection_str.strip().split("-", 1)
         zone1 = parts[0].strip()
         zone2 = parts[1].strip()
 

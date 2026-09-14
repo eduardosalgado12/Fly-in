@@ -33,10 +33,6 @@ class Zone:
             return 2
         return 1
 
-    def not_full(self) -> bool:
-        """Checks if this zone can still accept another drone."""
-        return len(self.current_occupants) < self.max_drones
-
 
 class StartHub(Zone):
     """Represents the starting zone. Has unlimited capacity."""
@@ -61,31 +57,23 @@ class Connection:
         self.zone2 = zone2
         self.max_link_capacity = max_link_capacity
 
-        self.current_occupants: list[str] = []
-
     def connects(self, name_a: str, name_b: str) -> bool:
         """Checks if this connection links the given pair of zone names."""
         direct = name_a == self.zone1 and name_b == self.zone2
         reverse = name_a == self.zone2 and name_b == self.zone1
         return direct or reverse
 
-    def not_full(self) -> bool:
-        """Checks if this connection can still accept another drone."""
-
-        return len(self.current_occupants) < self.max_link_capacity
-
 
 class Drone:
     """Represents a single drone moving through the zone graph."""
 
-    def __init__(self, id: str, current_zone: Optional[str] = None,
+    def __init__(self, id: str, current_zone: str,
                  current_connection: Optional[str] = None,
                  turns_remaining: int = 0) -> None:
         self.id = id
         self.current_zone = current_zone
         self.current_connection = current_connection
-        self.turns_remaining = turns_remaining
-        self.path: list[str] = []
+        self.path: list[tuple[str, int]] = []
         self.path_step: int = 0
 
 
@@ -138,3 +126,11 @@ class Graph:
                 neighbors.append(connection.zone1)
 
         return neighbors
+
+    def get_connection(self, zone1: str, zone2: str) -> Optional[Connection]:
+        """Find the connection between two zones within the graph."""
+
+        for conn in self.connections:
+            if conn.connects(zone1, zone2):
+                return conn
+        return None

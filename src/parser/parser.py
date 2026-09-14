@@ -1,7 +1,5 @@
 
-from classes import (
-    Graph, Zone, StartHub, EndHub, Connection, ZoneType,
-)
+from src.graph import ZoneType, Zone, Graph, Connection
 
 
 class ParserError(Exception):

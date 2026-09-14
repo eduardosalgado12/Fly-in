@@ -1,7 +1,7 @@
 
 import sys
-from parser import Parser
-from simulation import Simulation
+from src.parser import Parser
+from src.simulation import Simulation
 
 if __name__ == "__main__":
 

@@ -34,6 +34,11 @@ class Zone:
             return 2
         return 1
 
+    def get_zone_weight(self) -> float:
+        if self.zone_type == ZoneType.PRIORITY:
+            return 0.9
+        return 1.0
+
 
 class StartHub(Zone):
     """Represents the starting zone. Has unlimited capacity."""

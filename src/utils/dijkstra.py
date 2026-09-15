@@ -1,11 +1,12 @@
 
-from src.core import ZoneType, Zone, Graph
+from src.models import ZoneType, Zone, Graph
 import heapq
 
 
 def find_path(graph: Graph, start: str, end: str, res_zones: dict,
               res_conns: dict) -> list[tuple[str, int]]:
-    """Find the fastest path in the Space-Time Graph using Dijkstra."""
+    """Find the fastest and most prioritized path in the Space-Time
+                    Graph using Dijkstra."""
 
     if start == end:
         return [(start, 0)]
@@ -31,21 +32,20 @@ def find_path(graph: Graph, start: str, end: str, res_zones: dict,
             (from_zone, to_zone, turn), 0)
         return cur_link_reservations < conn.max_link_capacity
 
-    queue = [(0, start, [(start, 0)])]
-    best_turns = {(start, 0): 0}
+    queue = [(0.0, 0, start, [(start, 0)])]
+    best_weights = {(start, 0): 0.0}
 
     while queue:
-        current_turn, current_zone, path = heapq.heappop(queue)
+        cur_weight, cur_turn, cur_zone, path = heapq.heappop(queue)
 
-        if current_zone == end:
+        if cur_zone == end:
             return path
 
-        if current_turn > best_turns.get(
-          (current_zone, current_turn), float('inf')):
+        if cur_turn > best_weights.get((cur_zone, cur_turn), float('inf')):
             continue
 
-        wait_turn = current_turn + 1
-        if _is_zone_accessible(current_zone, wait_turn):
+        wait_turn = cur_turn + 1
+        if _is_zone_accessible(cur_zone, wait_turn):
             if wait_turn < best_turns.get(
               (current_zone, wait_turn), float('inf')):
                 best_turns[(current_zone, wait_turn)] = wait_turn

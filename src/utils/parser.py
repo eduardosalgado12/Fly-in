@@ -1,5 +1,5 @@
 
-from src.core import ZoneType, Zone, Graph, Connection, StartHub, EndHub
+from src.models import ZoneType, Zone, Graph, Connection, StartHub, EndHub
 
 
 class ParserError(Exception):

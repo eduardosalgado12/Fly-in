@@ -1,5 +1,5 @@
 
-from src.core import ZoneType, Graph, Drone
+from src.models import ZoneType, Graph, Drone
 from src.utils import find_path
 
 

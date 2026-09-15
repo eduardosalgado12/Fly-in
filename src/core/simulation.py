@@ -1,6 +1,6 @@
 
-from graph.classes import ZoneType, Graph, Drone
-from pathfinding.dijkstra import find_path
+from src.core import ZoneType, Graph, Drone
+from src.utils import find_path
 
 
 class Simulation:
@@ -28,25 +28,30 @@ class Simulation:
             new_drone = Drone(drone_id, self.start)
             self.drones.append(new_drone)
 
-            path = find_path(new_drone.current_zone, self.end)
+            path = find_path(
+                self.graph,
+                new_drone.current_zone,
+                self.end,
+                self.reservation_zones,
+                self.reservation_connections
+            )
 
             if not path:
                 raise ValueError(f"No path found for drone {new_drone.id}")
             new_drone.path = path
 
-            # Commit chronological reservations for the drone
             for i in range(len(path)):
                 zone, turn = path[i]
 
-                # 1. Book the Zone
-                self.reservation_zones[(zone, turn)] = self.reservation_zones.get((zone, turn), 0) + 1
+                atual = self.reservation_zones.get((zone, turn), 0)
+                self.reservation_zones[(zone, turn)] = atual + 1
 
-                # 2. Book the Connection if there is a next step and the drone actually moves
                 if i < len(path) - 1:
                     next_zone, next_turn = path[i + 1]
                     if zone != next_zone:
                         conn_key = (zone, next_zone, next_turn)
-                        self.reservation_connections[conn_key] = self.reservation_connections.get(conn_key, 0) + 1
+                        atual = self.reservation_connections.get(conn_key, 0)
+                        self.reservation_connections[conn_key] = atual + 1
 
     def run(self) -> None:
         """Execute the turn-by-turn simulation following strictly the
@@ -80,10 +85,12 @@ class Simulation:
                             dest_zone = self.graph.zones[next_zone]
 
                             if dest_zone.zone_type == ZoneType.RESTRICTED:
-                                conn = self.graph.get_connection(curr_zone, next_zone)
+                                conn = self.graph.get_connection(
+                                    curr_zone, next_zone)
 
                                 if conn:
-                                    moves.append(f"{drone.id}-{conn.zone1}-{conn.zone2}")
+                                    moves.append(f"{drone.id}-{conn.zone1}-"
+                                                 f"{conn.zone2}")
                             else:
                                 moves.append(f"{drone.id}-{next_zone}")
             if moves:

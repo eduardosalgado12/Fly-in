@@ -1,0 +1,39 @@
+while queue 
+.inicia um ciclo que continuara a executar enquando existirem estados 
+por explorar dentro da fila de prioridade. 
+
+cur_weight, cur_turn, cur_zone, path = heapq.heappop(queue):
+.extrai da fila o estado que tem menor peso acumulado
+
+if cur_zone == end:
+        return path
+.garante que devolvemos o caminho mais curto/leve, devido a propiedade
+do Dijkstra.Sendo a primeira vez que chegamos ao destino,termina e retorna o caminho mais curto.
+
+if cur_weight > best_weight.get((cur_zone, cur_turn), inf):
+    continue
+.O que faz: É uma otimização clássica do Dijkstra. Se o peso do estado atual for
+maior do que o menor peso já registado para este exato par (zona, turno), significa
+que já encontrámos uma forma melhor de chegar aqui. O algoritmo descarta este 
+estado e avança para o próximo.
+
+wait_turn = cur_turn + 1
+.O que faz: Calcula qual seria o número do próximo turno (wait_turn) caso o agente
+decida não se mover e esperar na zona atual.
+
+if _is_zone_accessible(cur_zone, wait_turn):
+
+.O que faz: Chama uma função auxiliar para verificar se a zona atual continuará 
+segura/acessível no próximo turno (ex: evitar perigos temporários).
+
+if cur_weight < best_weight.get((cur_zone, wait_turn), float('inf')):
+.O que faz: Verifica se a ação de esperar oferece um caminho mais leve do que qualquer 
+outra rota que já tenha chegado a esta mesma zona neste turno futuro.
+
+best_weight[(cur_zone, wait_turn)] = cur_weight
+.O que faz: Atualiza o registo de pesos, definindo que o custo atual é o novo mínimo
+para esta zona no turno da espera.
+
+heapq.heappush(queue, (cur_weight, wait_turn, cur_zone, path + [(cur_zone, wait_turn)]))
+.O que faz: Insere a ação de esperar na fila de prioridade. O peso mantém-se (cur_weight), 
+o turno avança, a zona continua a mesma e o turno de espera é adicionado ao histórico do caminho.

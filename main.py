@@ -1,7 +1,7 @@
 
 import sys
 from src.utils import Parser
-from src.core.simulation import Simulation
+from src.core import Simulation
 
 
 def main() -> None:

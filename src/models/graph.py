@@ -1,6 +1,6 @@
 
 from typing import Optional
-from src.core import Zone, StartHub, EndHub
+from src.models import Zone, StartHub, EndHub
 
 
 class Connection:

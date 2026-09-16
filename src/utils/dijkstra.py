@@ -1,5 +1,6 @@
 
-from src.models import ZoneType, Zone, Graph
+from src.models import ZoneType, Graph
+from math import inf
 import heapq
 
 
@@ -32,8 +33,10 @@ def find_path(graph: Graph, start: str, end: str, res_zones: dict,
             (from_zone, to_zone, turn), 0)
         return cur_link_reservations < conn.max_link_capacity
 
+    # peso, custo, turno, caminho( zona, turno)
     queue = [(0.0, 0, start, [(start, 0)])]
-    best_weights = {(start, 0): 0.0}
+    # (zona,turno), peso
+    best_weight = {(start, 0): 0.0}
 
     while queue:
         cur_weight, cur_turn, cur_zone, path = heapq.heappop(queue)
@@ -41,50 +44,46 @@ def find_path(graph: Graph, start: str, end: str, res_zones: dict,
         if cur_zone == end:
             return path
 
-        if cur_turn > best_weights.get((cur_zone, cur_turn), float('inf')):
+        if cur_weight > best_weight.get((cur_zone, cur_turn), inf):
             continue
 
+        current_zone_obj = graph.zones[cur_zone]
         wait_turn = cur_turn + 1
-        if _is_zone_accessible(cur_zone, wait_turn):
-            if wait_turn < best_turns.get(
-              (current_zone, wait_turn), float('inf')):
-                best_turns[(current_zone, wait_turn)] = wait_turn
-                heapq.heappush(queue, (wait_turn, current_zone, path +
-                               [(current_zone, wait_turn)]))
+        wait_weight = cur_weight + current_zone_obj.zone_weight()
 
-        for neighbor in graph.get_neighbors(current_zone):
+        if _is_zone_accessible(cur_zone, wait_turn):
+            if wait_weight < best_weight.get((cur_zone, wait_turn), inf):
+                best_weight[(cur_zone, wait_turn)] = wait_weight
+                heapq.heappush(queue, (wait_weight, wait_turn, cur_zone, path +
+                               [(cur_zone, wait_turn)]))
+
+        for neighbor in graph.get_neighbors(cur_zone):
             neighbor_zone = graph.zones[neighbor]
             neighbor_type = neighbor_zone.zone_type
 
             if neighbor_type == ZoneType.BLOCKED:
                 continue
 
-            arrival_turn = current_turn + Zone.movement_cost(neighbor_zone)
-
-            if not _is_connection_accessible(
-                 current_zone, neighbor, current_turn):
+            if not _is_connection_accessible(cur_zone, neighbor, cur_turn):
                 continue
 
+            movement_cost = neighbor_zone.movement_cost()
+            arrival_turn = cur_turn + movement_cost
+
             if neighbor_type == ZoneType.RESTRICTED:
-                accessible = (_is_zone_accessible(
-                    neighbor, arrival_turn - 1) and
-                    _is_zone_accessible(neighbor, arrival_turn))
+                accessible = (_is_zone_accessible(neighbor, arrival_turn - 1)
+                              and _is_zone_accessible(neighbor, arrival_turn))
             else:
-                accessible = _is_zone_accessible(
-                     neighbor, arrival_turn)
+                accessible = _is_zone_accessible(neighbor, arrival_turn)
 
             if accessible:
-                if arrival_turn < best_turns.get(
-                     (neighbor, arrival_turn), float('inf')):
-                    best_turns[(neighbor, arrival_turn)] = arrival_turn
+                zone_weight = neighbor_zone.zone_weight()
+                new_weight = cur_weight + (movement_cost * zone_weight)
 
-                    if neighbor_type == ZoneType.RESTRICTED:
-                        new_path = path + [
-                            (neighbor, arrival_turn - 1),
-                            (neighbor, arrival_turn)]
-                    else:
-                        new_path = path + [(neighbor, arrival_turn)]
+                if new_weight < best_weight.get((neighbor, arrival_turn), inf):
+                    best_weight[(neighbor, arrival_turn)] = new_weight
 
-                    heapq.heappush(queue, (arrival_turn, neighbor, new_path))
-
+                    new_path = path + [(neighbor, arrival_turn)]
+                    heapq.heappush(queue, (new_weight, arrival_turn,
+                                           neighbor, new_path))
     return []

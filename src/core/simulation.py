@@ -49,7 +49,7 @@ class Simulation:
                 if i < len(path) - 1:
                     next_zone, next_turn = path[i + 1]
                     if zone != next_zone:
-                        conn_key = (zone, next_zone, next_turn)
+                        conn_key = (zone, next_zone, turn)
                         atual = self.reservation_connections.get(conn_key, 0)
                         self.reservation_connections[conn_key] = atual + 1
 

@@ -20,8 +20,12 @@ def main() -> None:
         print(f"Parsing Error: {e}")
         sys.exit(1)
 
-    sim = Simulation(parser.nb_drones, parser.graph)
-    sim.run()
+    try:
+        sim = Simulation(parser.nb_drones, parser.graph)
+        sim.run()
+    except ValueError as e:
+        print(f"Simulation Error: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

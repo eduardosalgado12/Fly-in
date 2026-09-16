@@ -1,6 +1,6 @@
 nb_drones: 3
-start_hub: hub 0 0
-hub: bottleneck 1 0
-end_hub: goal 2 0
+start_hub: hub 0 0.1
+hub: bottleneck 1 0 [Zonetype = ffd]
+end_hub: goal 2 0 
 connection: hub-bottleneck
 connection: bottleneck-goal

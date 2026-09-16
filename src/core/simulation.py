@@ -47,7 +47,7 @@ class Simulation:
                 self.reservation_zones[(zone, turn)] = atual + 1
 
                 if i < len(path) - 1:
-                    next_zone, next_turn = path[i + 1]
+                    next_zone, _ = path[i + 1]
                     if zone != next_zone:
                         conn_key = (zone, next_zone, turn)
                         atual = self.reservation_connections.get(conn_key, 0)
@@ -76,6 +76,7 @@ class Simulation:
 
                 if next_step < len(drone.path):
                     next_zone, scheduled_turn = drone.path[next_step]
+                    _, curr_scheduled_turn = drone.path[drone.path_step]
 
                     if scheduled_turn == current_turn:
                         drone.path_step = next_step
@@ -87,11 +88,14 @@ class Simulation:
                             if dest_zone.zone_type == ZoneType.RESTRICTED:
                                 conn = self.graph.get_connection(
                                     curr_zone, next_zone)
-
                                 if conn:
                                     moves.append(f"{drone.id}-{conn.zone1}-"
                                                  f"{conn.zone2}")
                             else:
                                 moves.append(f"{drone.id}-{next_zone}")
+                        elif (scheduled_turn != curr_scheduled_turn and
+                              self.graph.zones[next_zone].zone_type
+                              == ZoneType.RESTRICTED):
+                            moves.append(f"{drone.id}-{next_zone}")
             if moves:
                 print(" ".join(moves))

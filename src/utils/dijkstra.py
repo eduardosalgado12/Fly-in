@@ -33,12 +33,16 @@ def find_path(graph: Graph, start: str, end: str, res_zones: dict,
             (from_zone, to_zone, turn), 0)
         return cur_link_reservations < conn.max_link_capacity
 
-    # peso, custo, turno, caminho( zona, turno)
     queue = [(0.0, 0, start, [(start, 0)])]
-    # (zona,turno), peso
     best_weight = {(start, 0): 0.0}
 
+    iterations = 0
+    MAX_ITERATIONS = 10000
+
     while queue:
+        iterations += 1
+        if iterations > MAX_ITERATIONS:
+            return []
         cur_weight, cur_turn, cur_zone, path = heapq.heappop(queue)
 
         if cur_zone == end:
@@ -49,7 +53,7 @@ def find_path(graph: Graph, start: str, end: str, res_zones: dict,
 
         current_zone_obj = graph.zones[cur_zone]
         wait_turn = cur_turn + 1
-        wait_weight = cur_weight + current_zone_obj.zone_weight()
+        wait_weight = cur_weight + current_zone_obj.zone_weight() - 0.1
 
         if _is_zone_accessible(cur_zone, wait_turn):
             if wait_weight < best_weight.get((cur_zone, wait_turn), inf):
@@ -83,7 +87,11 @@ def find_path(graph: Graph, start: str, end: str, res_zones: dict,
                 if new_weight < best_weight.get((neighbor, arrival_turn), inf):
                     best_weight[(neighbor, arrival_turn)] = new_weight
 
-                    new_path = path + [(neighbor, arrival_turn)]
+                    if neighbor_type == ZoneType.RESTRICTED:
+                        new_path = path + [(neighbor, arrival_turn - 1),
+                                           (neighbor, arrival_turn)]
+                    else:
+                        new_path = path + [(neighbor, arrival_turn)]
                     heapq.heappush(queue, (new_weight, arrival_turn,
                                            neighbor, new_path))
     return []

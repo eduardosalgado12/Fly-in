@@ -1,11 +1,15 @@
 
-from src.models import ZoneType, Graph
+from src.models import ZoneType, Graph, SpaceTimePath
 from math import inf
 import heapq
 
+MAX_TURNS = 100
+WAIT_TIE_BREAK = 0.01
 
-def find_path(graph: Graph, start: str, end: str, res_zones: dict,
-              res_conns: dict) -> list[tuple[str, int]]:
+
+def find_path(graph: Graph, start: str, end: str, res_zones:
+              dict[tuple[str, int], int], res_conns:
+              dict[tuple[str, str, int], int]) -> SpaceTimePath:
     """Find the fastest and most prioritized path in the Space-Time
                     Graph using Dijkstra."""
 
@@ -36,14 +40,11 @@ def find_path(graph: Graph, start: str, end: str, res_zones: dict,
     queue = [(0.0, 0, start, [(start, 0)])]
     best_weight = {(start, 0): 0.0}
 
-    iterations = 0
-    MAX_ITERATIONS = 10000
-
     while queue:
-        iterations += 1
-        if iterations > MAX_ITERATIONS:
-            return []
         cur_weight, cur_turn, cur_zone, path = heapq.heappop(queue)
+
+        if cur_turn > MAX_TURNS:
+            break
 
         if cur_zone == end:
             return path
@@ -51,9 +52,9 @@ def find_path(graph: Graph, start: str, end: str, res_zones: dict,
         if cur_weight > best_weight.get((cur_zone, cur_turn), inf):
             continue
 
-        current_zone_obj = graph.zones[cur_zone]
+        cur_zone_obj = graph.zones[cur_zone]
         wait_turn = cur_turn + 1
-        wait_weight = cur_weight + current_zone_obj.zone_weight() - 0.1
+        wait_weight = cur_weight + cur_zone_obj.zone_weight() - WAIT_TIE_BREAK
 
         if _is_zone_accessible(cur_zone, wait_turn):
             if wait_weight < best_weight.get((cur_zone, wait_turn), inf):

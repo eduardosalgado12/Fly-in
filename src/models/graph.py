@@ -5,12 +5,14 @@ from src.models import Zone, StartHub, EndHub
 
 class Connection:
     """Represents a bidirectional connection (edge) between two zones."""
-
     def __init__(self, zone1: str, zone2: str,
                  max_link_capacity: int = 1) -> None:
         self.zone1 = zone1
         self.zone2 = zone2
         self.max_link_capacity = max_link_capacity
+
+    def __repr__(self) -> str:
+        return f"Connection({self.zone1}-{self.zone2})"
 
     def connects(self, name_a: str, name_b: str) -> bool:
         """Checks if this connection links the given pair of zone names."""
@@ -21,7 +23,6 @@ class Connection:
 
 class Graph:
     """Represents the full network of zones and connections."""
-
     def __init__(self) -> None:
         self.zones: dict[str, Zone] = {}
         self.connections: list[Connection] = []
@@ -40,7 +41,6 @@ class Graph:
 
     def add_connection(self, new_connection: Connection) -> None:
         """Add a connection to the graph, rejecting duplicates."""
-
         if new_connection.zone1 not in self.zones:
             raise ValueError(f"Unknown zone: {new_connection.zone1}")
 
@@ -58,7 +58,6 @@ class Graph:
 
     def get_neighbors(self, zone_name: str) -> list[str]:
         """Returns the names of zones directly connected to the given zone."""
-
         neighbors: list[str] = []
 
         for connection in self.connections:
@@ -71,7 +70,6 @@ class Graph:
 
     def get_connection(self, zone1: str, zone2: str) -> Optional[Connection]:
         """Find the connection between two zones within the graph."""
-
         for conn in self.connections:
             if conn.connects(zone1, zone2):
                 return conn

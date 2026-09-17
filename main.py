@@ -1,7 +1,7 @@
 
 import sys
 from src.utils import Parser
-from src.core import Simulation
+from src.core import Simulation, Visualizer
 
 
 def main() -> None:
@@ -26,6 +26,10 @@ def main() -> None:
     except ValueError as e:
         print(f"Simulation Error: {e}")
         sys.exit(1)
+
+    v = Visualizer(parser.graph)
+    v.draw_map()
+    v.fig.savefig("teste_mapa.png")
 
 
 if __name__ == "__main__":

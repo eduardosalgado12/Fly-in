@@ -10,14 +10,42 @@ WAIT_TIE_BREAK = 0.01
 def find_path(graph: Graph, start: str, end: str, res_zones:
               dict[tuple[str, int], int], res_conns:
               dict[tuple[str, str, int], int]) -> SpaceTimePath:
-    """Find the fastest and most prioritized path in the Space-Time
-                    Graph using Dijkstra."""
+    """Finds the fastest and most prioritized path in the space-time graph.
 
+    Searches over (zone, turn) states with Dijkstra's algorithm, so the
+    resulting path already accounts for other drones' reservations
+    (`res_zones`/`res_conns`) and never revisits a zone/connection at a
+    turn where it would exceed capacity.
+
+    Args:
+        graph: The zone graph to search.
+        start: Name of the zone to start from.
+        end: Name of the destination zone.
+        res_zones: Mapping of `(zone_name, turn)` to the number of drones
+            already reserved there, used to avoid capacity conflicts.
+        res_conns: Mapping of `(from_zone, to_zone, turn)` to the number of
+            drones already reserved on that connection at that turn.
+
+    Returns:
+        The path as a list of `(zone_name, turn)` pairs, from `start` at
+        turn 0 to `end`. A `RESTRICTED` zone contributes two entries (its
+        departure and arrival turns). Returns an empty list if no path is
+        found within `MAX_TURNS`.
+    """
     if start == end:
         return [(start, 0)]
 
     def _is_zone_accessible(zone_name: str, turn: int) -> bool:
-        """Check if the zone has available cap in a spec turn."""
+        """Checks if the zone has available capacity at a specific turn.
+
+        Args:
+            zone_name: Name of the zone to check.
+            turn: The turn at which to check availability.
+
+        Returns:
+            True if `start`/`end` (unlimited capacity), or if the zone has
+            not yet reached `max_drones` reservations at that turn.
+        """
         if zone_name in [start, end]:
             return True
 
@@ -27,8 +55,17 @@ def find_path(graph: Graph, start: str, end: str, res_zones:
 
     def _is_connection_accessible(from_zone: str,
                                   to_zone: str, turn: int) -> bool:
-        """Check if the connection link has available cap in a spec turn."""
+        """Checks if the connection has available capacity at a turn.
 
+        Args:
+            from_zone: Name of the zone the connection departs from.
+            to_zone: Name of the zone the connection arrives at.
+            turn: The turn at which to check availability.
+
+        Returns:
+            True if the connection exists and has not yet reached
+            `max_link_capacity` reservations at that turn.
+        """
         conn = graph.get_connection(from_zone, to_zone)
         if not conn:
             return False

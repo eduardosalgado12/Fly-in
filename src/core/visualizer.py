@@ -16,7 +16,13 @@ DRONE_EMOJI = "✈"
 
 class Visualizer:
     """Draws the zone graph and animates drone positions using matplotlib."""
+
     def __init__(self, graph: Graph) -> None:
+        """Initializes the visualizer for a given graph.
+
+        Args:
+            graph: The zone graph to draw and animate.
+        """
         self.graph = graph
         self.fig, self.ax = plt.subplots()
         self.drone_markers: list[Any] = []

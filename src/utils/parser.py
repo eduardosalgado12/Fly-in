@@ -11,13 +11,20 @@ class Parser:
     """Parses a Fly-in map file into a Graph and drone count."""
 
     def __init__(self) -> None:
+        """Initializes an empty parser, with no graph parsed yet."""
         self.graph = Graph()
         self.nb_drones: int = 0
         self.current_line: int = 0
 
     def parse(self, file_map: str) -> None:
-        """Reads the map file and populates self.graph and self.nb_drones."""
+        """Reads the map file and populates self.graph and self.nb_drones.
 
+        Args:
+            file_map: Path to the map file to parse.
+
+        Raises:
+            ParserError: If any line of the file is invalid or malformed.
+        """
         with open(file_map, "r", encoding="utf-8") as file:
             lines = file.readlines()
             for i in range(0, len(lines)):
@@ -27,8 +34,14 @@ class Parser:
                 self._parse_line(line)
 
     def _parse_line(self, line: str) -> None:
-        """Identifies the line type and delegates to the right handler."""
+        """Identifies the line type and delegates to the right handler.
 
+        Args:
+            line: A single, already-stripped line from the map file.
+
+        Raises:
+            ParserError: If the line does not match any known format.
+        """
         if line == "" or line.startswith("#"):
             return
 
@@ -48,8 +61,14 @@ class Parser:
             )
 
     def _parse_nb_drones(self, line: str) -> None:
-        """Parses the 'nb_drones: <positive_integer>' line."""
+        """Parses the 'nb_drones: <positive_integer>' line.
 
+        Args:
+            line: The value part of the line, after the 'nb_drones:' prefix.
+
+        Raises:
+            ParserError: If the value is not a positive integer.
+        """
         try:
             nb_drones = int(line)
         except ValueError:
@@ -63,8 +82,17 @@ class Parser:
         self.nb_drones = nb_drones
 
     def _parse_metadata(self, block: str) -> dict[str, str]:
-        """Parses a '[key=value key2=value2]' block into a dict."""
+        """Parses a '[key=value key2=value2]' block into a dict.
 
+        Args:
+            block: The metadata block, e.g. "zone=priority color=green]".
+
+        Returns:
+            A dict mapping each metadata key to its raw string value.
+
+        Raises:
+            ParserError: If any pair in the block is not in 'key=value' form.
+        """
         metadata: dict[str, str] = {}
 
         for pair in block.strip("]").split():
@@ -79,7 +107,19 @@ class Parser:
 
     def _parse_zone(self, line: str, is_start: bool = False,
                     is_end: bool = False) -> None:
+        """Parses a 'hub:'/'start_hub:'/'end_hub:' line into a zone.
 
+        Args:
+            line: The value part of the line, after its prefix, e.g.
+                "roof1 3 4 [zone=restricted color=red]".
+            is_start: Whether this line declares the start zone.
+            is_end: Whether this line declares the end zone.
+
+        Raises:
+            ParserError: If the zone name, coordinates or metadata are
+                invalid, the name is already used, or a duplicate
+                start/end zone is declared.
+        """
         if "[" in line:
             zone_str, metadata_block = line.split("[", 1)
             metadata = self._parse_metadata(metadata_block)
@@ -147,7 +187,16 @@ class Parser:
             self.graph.add_zone(Zone(name, x, y, zone_type, color, max_drones))
 
     def _parse_connection(self, line: str) -> None:
+        """Parses a 'connection: <zone1>-<zone2> [metadata]' line.
 
+        Args:
+            line: The value part of the line, after the 'connection:'
+                prefix, e.g. "roof1-corridorA [max_link_capacity=2]".
+
+        Raises:
+            ParserError: If `max_link_capacity` is invalid, or either
+                endpoint zone is unknown (raised by `Graph.add_connection`).
+        """
         if "[" in line:
             connection_str, metadata_block = line.split("[", 1)
             metadata = self._parse_metadata(metadata_block)

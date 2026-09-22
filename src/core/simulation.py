@@ -6,9 +6,25 @@ from src.core.visualizer import Visualizer
 
 
 class Simulation:
+    """Routes and runs a fleet of drones from the start to the end zone.
+
+    Computes a space-time path for each drone (via `find_path`), booking
+    zone/connection reservations sequentially so later drones avoid
+    conflicts with earlier ones, then replays those paths turn by turn in
+    `run()`, printing each turn's moves and optionally updating a live
+    visualization.
+    """
 
     def __init__(self, nb_drones: int, graph: Graph, visualizer:
                  Optional[Visualizer] = None) -> None:
+        """Initializes the simulation and computes every drone's path.
+
+        Args:
+            nb_drones: Number of drones to route from start to end.
+            graph: The zone graph to route drones through.
+            visualizer: Optional `Visualizer` to update after each turn.
+                If `None`, the simulation runs without any visual output.
+        """
         self.nb_drones = nb_drones
         self.graph = graph
         self.visualizer = visualizer

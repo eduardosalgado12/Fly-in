@@ -55,7 +55,6 @@ class Simulation:
                 self.reservation_zones,
                 self.reservation_connections
             )
-            # print(path)
 
             if not path:
                 raise ValueError(f"No path found for drone {new_drone.id}")
@@ -82,7 +81,6 @@ class Simulation:
             self.visualizer.update_drones(self.drones, 0)
 
         while True:
-            # print(self.drones)
             d_end = sum(1 for d in self.drones if d.current_zone == self.end)
             if d_end == self.nb_drones:
                 break

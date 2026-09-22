@@ -1,4 +1,3 @@
-
 from src.models import ZoneType, Zone, Graph, Connection, StartHub, EndHub
 
 
@@ -32,6 +31,11 @@ class Parser:
                 line = lines[i].strip()
                 self.current_line = nbr_line
                 self._parse_line(line)
+
+        if self.graph.start is None:
+            raise ParserError("Missing required start_hub zone")
+        if self.graph.end is None:
+            raise ParserError("Missing required end_hub zone")
 
     def _parse_line(self, line: str) -> None:
         """Identifies the line type and delegates to the right handler.
@@ -128,9 +132,15 @@ class Parser:
             metadata = {}
 
         parts = zone_str.split()
-        name = parts[0]
-        x_str = parts[1]
-        y_str = parts[2]
+        try:
+            name = parts[0]
+            x_str = parts[1]
+            y_str = parts[2]
+        except IndexError:
+            raise ParserError(
+                f"Line {self.current_line}: zone line must have a name, "
+                f"x and y"
+            )
 
         if "-" in name or " " in name:
             raise ParserError(
@@ -205,8 +215,14 @@ class Parser:
             metadata = {}
 
         parts = connection_str.strip().split("-", 1)
-        zone1 = parts[0].strip()
-        zone2 = parts[1].strip()
+        try:
+            zone1 = parts[0].strip()
+            zone2 = parts[1].strip()
+        except IndexError:
+            raise ParserError(
+                f"Line {self.current_line}: connection must be in the "
+                f"form <zone1>-<zone2>"
+            )
 
         max_link_capacity_str = metadata.get("max_link_capacity", "1")
         try:
@@ -221,4 +237,8 @@ class Parser:
                 f"Line {self.current_line}: max_link_capacity must be positive"
             )
 
-        self.graph.add_connection(Connection(zone1, zone2, max_link_capacity))
+        try:
+            self.graph.add_connection(
+                Connection(zone1, zone2, max_link_capacity))
+        except ValueError as e:
+            raise ParserError(f"Line {self.current_line}: {e}")

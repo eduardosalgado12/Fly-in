@@ -1,13 +1,17 @@
 
 from src.models import ZoneType, Graph, Drone
 from src.utils import find_path
+from typing import Optional
+from src.core.visualizer import Visualizer
 
 
 class Simulation:
 
-    def __init__(self, nb_drones: int, graph: Graph) -> None:
+    def __init__(self, nb_drones: int, graph: Graph, visualizer:
+                 Optional[Visualizer] = None) -> None:
         self.nb_drones = nb_drones
         self.graph = graph
+        self.visualizer = visualizer
 
         self.drones: list[Drone] = []
         self.reservation_zones: dict[tuple[str, int], int] = {}
@@ -35,7 +39,7 @@ class Simulation:
                 self.reservation_zones,
                 self.reservation_connections
             )
-            print(path)
+            # print(path)
 
             if not path:
                 raise ValueError(f"No path found for drone {new_drone.id}")
@@ -58,6 +62,8 @@ class Simulation:
         """Execute the turn-by-turn simulation following strictly the
            predefined space-time planning."""
         current_turn = 0
+        if self.visualizer is not None:
+            self.visualizer.update_drones(self.drones, 0)
 
         while True:
             # print(self.drones)
@@ -101,3 +107,6 @@ class Simulation:
                             moves.append(f"{drone.id}-{next_zone}")
             if moves:
                 print(" ".join(moves))
+
+            if self.visualizer is not None:
+                self.visualizer.update_drones(self.drones, current_turn)

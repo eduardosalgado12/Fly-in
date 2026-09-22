@@ -1,6 +1,5 @@
-
 import sys
-from src.utils import Parser
+from src.utils import Parser, ParserError
 from src.core import Simulation, Visualizer
 
 
@@ -16,20 +15,19 @@ def main() -> None:
     parser = Parser()
     try:
         parser.parse(file)
-    except Exception as e:
+    except ParserError as e:
         print(f"Parsing Error: {e}")
-        sys.exit(1)
-
-    try:
-        sim = Simulation(parser.nb_drones, parser.graph)
-        sim.run()
-    except ValueError as e:
-        print(f"Simulation Error: {e}")
         sys.exit(1)
 
     v = Visualizer(parser.graph)
     v.draw_map()
-    v.fig.savefig("teste_mapa.png")
+
+    try:
+        sim = Simulation(parser.nb_drones, parser.graph, v)
+        sim.run()
+    except ValueError as e:
+        print(f"Simulation Error: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

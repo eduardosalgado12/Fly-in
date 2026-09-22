@@ -164,7 +164,8 @@ class Parser:
             zone_type = ZoneType(zone_type_str)
         except ValueError:
             raise ParserError(
-                f"Line {self.current_line}: invalid zone type {zone_type}"
+                f"Line {self.current_line}: invalid zone type "
+                f"{zone_type_str}"
                 )
 
         color = metadata.get("color")

@@ -55,6 +55,7 @@ class Simulation:
                 self.reservation_zones,
                 self.reservation_connections
             )
+            print(f"Drone{n}:{path}")
 
             if not path:
                 raise ValueError(f"No path found for drone {new_drone.id}")

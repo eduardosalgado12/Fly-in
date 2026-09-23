@@ -1,7 +1,7 @@
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
-from src.models import Graph, Drone, StartHub, EndHub
+from src.models import Graph, Drone, StartHub, EndHub, ZoneType
 from typing import Any
 import math
 
@@ -26,6 +26,7 @@ class Visualizer:
         self.graph = graph
         self.fig, self.ax = plt.subplots()
         self.drone_markers: list[Any] = []
+        self.previous_zones: dict[str, str] = {}
 
     def draw_map(self) -> None:
         """Draws all zones and connections once, before the simulation runs."""
@@ -71,6 +72,7 @@ class Visualizer:
     def update_drones(self, drones: list[Drone], turn: int) -> None:
         """Erases old drone markers and draws new ones at current positions,
         spreading out drones that share a zone."""
+
         for marker in self.drone_markers:
             marker.remove()
 
@@ -90,15 +92,24 @@ class Visualizer:
             total = len(drones_at_zone)
 
             for index, drone in enumerate(drones_at_zone):
-                if total == 1:
-                    dx, dy = 0.0, 0.0
-                else:
-                    angle = (2 * math.pi / total) * index
-                    dx = OFFSET_RAD * math.cos(angle)
-                    dy = OFFSET_RAD * math.sin(angle)
+                prev_zone_name = self.previous_zones.get(drone.id)
+                just_arrived = (prev_zone_name is not None
+                                and prev_zone_name != zone_name)
 
-                pos_x = zone_obj.x + dx
-                pos_y = zone_obj.y + dy
+                if (just_arrived and zone_obj.zone_type == ZoneType.RESTRICTED
+                        and prev_zone_name is not None):
+                    prev_zone_obj = self.graph.zones[prev_zone_name]
+                    pos_x = (prev_zone_obj.x + zone_obj.x) / 2
+                    pos_y = (prev_zone_obj.y + zone_obj.y) / 2
+                else:
+                    if total == 1:
+                        dx, dy = 0.0, 0.0
+                    else:
+                        angle = (2 * math.pi / total) * index
+                        dx = OFFSET_RAD * math.cos(angle)
+                        dy = OFFSET_RAD * math.sin(angle)
+                    pos_x = zone_obj.x + dx
+                    pos_y = zone_obj.y + dy
 
                 marker = self.ax.text(pos_x, pos_y, DRONE_EMOJI, ha='center',
                                       va='center', fontsize=14)
@@ -109,4 +120,5 @@ class Visualizer:
                                      fontsize=7, fontweight='bold')
                 self.drone_markers.append(label)
 
+        self.previous_zones = {d.id: d.current_zone for d in drones}
         plt.pause(PAUSE_SECONDS)

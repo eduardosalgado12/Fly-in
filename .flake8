@@ -1,2 +1,2 @@
 [flake8]
-exclude = venv,.venv,__pycache__,.mypy_cache
+exclude = venv,.venv,__pycache__,.mypy_cache,tests

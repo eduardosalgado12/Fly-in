@@ -1,4 +1,5 @@
 from src.models import ZoneType, Zone, Graph, Connection, StartHub, EndHub
+from matplotlib.colors import is_color_like
 
 
 class ParserError(Exception):
@@ -32,6 +33,8 @@ class Parser:
                 self.current_line = nbr_line
                 self._parse_line(line)
 
+        if self.nb_drones <= 0:
+            raise ParserError("Missing required nb_drones declaration")
         if self.graph.start is None:
             raise ParserError("Missing required start_hub zone")
         if self.graph.end is None:
@@ -49,16 +52,25 @@ class Parser:
         if line == "" or line.startswith("#"):
             return
 
-        if line.startswith("nb_drones:"):
-            self._parse_nb_drones(line.removeprefix("nb_drones: "))
-        elif line.startswith("start_hub:"):
-            self._parse_zone(line.removeprefix("start_hub: "), is_start=True)
-        elif line.startswith("end_hub:"):
-            self._parse_zone(line.removeprefix("end_hub: "), is_end=True)
-        elif line.startswith("hub:"):
-            self._parse_zone(line.removeprefix("hub: "))
-        elif line.startswith("connection: "):
-            self._parse_connection(line.removeprefix("connection: "))
+        if ":" not in line:
+            raise ParserError(
+                f"Line {self.current_line}: unrecognized line format"
+            )
+
+        prefix, value = line.split(":", 1)
+        prefix = prefix.strip()
+        value = value.strip()
+
+        if prefix == "nb_drones":
+            self._parse_nb_drones(value)
+        elif prefix == "start_hub":
+            self._parse_zone(value, is_start=True)
+        elif prefix == "end_hub":
+            self._parse_zone(value, is_end=True)
+        elif prefix == "hub":
+            self._parse_zone(value)
+        elif prefix == "connection":
+            self._parse_connection(value)
         else:
             raise ParserError(
                 f"Line {self.current_line}: unrecognized line format"
@@ -98,6 +110,11 @@ class Parser:
             ParserError: If any pair in the block is not in 'key=value' form.
         """
         metadata: dict[str, str] = {}
+
+        if not block.endswith("]"):
+            raise ParserError(
+                f"Line {self.current_line}: metadata block must end with ']'"
+            )
 
         for pair in block.strip("]").split():
             if "=" not in pair:
@@ -142,6 +159,12 @@ class Parser:
                 f"x and y"
             )
 
+        if len(parts) > 3:
+            raise ParserError(
+                f"Line {self.current_line}: unexpected data after coordinates "
+                f"(did you forget '['?)"
+            )
+
         if "-" in name or " " in name:
             raise ParserError(
                 f"Line {self.current_line}: zone names can't contain "
@@ -159,6 +182,14 @@ class Parser:
             raise ParserError(
                 f"Line {self.current_line}: x and y must be integer")
 
+        allowed_keys = {"zone", "color", "max_drones"}
+        unknown_keys = set(metadata) - allowed_keys
+        if unknown_keys:
+            raise ParserError(
+                f"Line {self.current_line}: unknown zone metadata "
+                f"{sorted(unknown_keys)}"
+            )
+
         zone_type_str = metadata.get("zone", "normal")
         try:
             zone_type = ZoneType(zone_type_str)
@@ -169,6 +200,10 @@ class Parser:
                 )
 
         color = metadata.get("color")
+        if color is not None and not is_color_like(color):
+            raise ParserError(
+                f"Line {self.current_line}: invalid color '{color}'"
+            )
 
         max_drones_str = metadata.get("max_drones", "1")
         try:
@@ -223,6 +258,19 @@ class Parser:
             raise ParserError(
                 f"Line {self.current_line}: connection must be in the "
                 f"form <zone1>-<zone2>"
+            )
+        if " " in zone1 or " " in zone2:
+            raise ParserError(
+                f"Line {self.current_line}: unexpected data after zone names "
+                f"(did you forget '['?)"
+            )
+
+        allowed_keys = {"max_link_capacity"}
+        unknown_keys = set(metadata) - allowed_keys
+        if unknown_keys:
+            raise ParserError(
+                f"Line {self.current_line}: unknown connection metadata "
+                f"{sorted(unknown_keys)}"
             )
 
         max_link_capacity_str = metadata.get("max_link_capacity", "1")
